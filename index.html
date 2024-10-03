@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saldo da Binance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Saldo de Criptomoedas na Binance</h1>
+    <button onclick="getDepositHistory()">Histórico de Depósitos</button>
+    <button onclick="getWithdrawalHistory()">Histórico de Saques</button>
+    <table id="crypto-table">
+        <thead>
+            <tr>
+                <th>Criptomoeda</th>
+                <th>Saldo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Os dados serão preenchidos aqui -->
+        </tbody>
+    </table>
+    <div id="history"></div>
+
+    <script>
+        async function getAccountInfo() {
+            const response = await fetch('/api/account');
+            if (response.ok) {
+                const data = await response.json();
+                populateTable(data.balances);
+            } else {
+                console.error('Erro ao buscar dados:', response.statusText);
+            }
+        }
+
+        function populateTable(balances) {
+            const tableBody = document.getElementById('crypto-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Limpar tabela antes de adicionar
+            balances.forEach(asset => {
+                if (parseFloat(asset.free) > 0) {
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).innerText = asset.asset;
+                    row.insertCell(1).innerText = asset.free;
+                }
+            });
+        }
+
+        async function getDepositHistory() {
+            const response = await fetch('/api/deposit-history');
+            if (response.ok) {
+                const data = await response.json();
+                displayHistory(data, 'depósitos');
+            } else {
+                console.error('Erro ao buscar histórico de depósitos:', response.statusText);
+            }
+        }
+
+        async function getWithdrawalHistory() {
+            const response = await fetch('/api/withdrawal-history');
+            if (response.ok) {
+                const data = await response.json();
+                displayHistory(data, 'saques');
+            } else {
+                console.error('Erro ao buscar histórico de saques:', response.statusText);
+            }
+        }
+
+        function displayHistory(data, type) {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = `<h2>Histórico de ${type.charAt(0).toUpperCase() + type.slice(1)}</h2>`;
+            const list = document.createElement('ul');
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = `Ativo: ${item.asset}, Quantidade: ${item.amount}, Status: ${item.status}`;
+                list.appendChild(li);
+            });
+            historyDiv.appendChild(list);
+        }
+
+        getAccountInfo();
+    </script>
+</body>
+</html>
